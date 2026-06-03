@@ -1,0 +1,72 @@
+/* =============================================
+   NestLink Global Styles
+   All teammates use these CSS variables.
+   Do NOT change variable names — just use them.
+   ============================================= */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+
+:root {
+  --navy:       #0a1628;
+  --navy-2:     #112040;
+  --navy-3:     #1a3060;
+  --gold:       #c9a84c;
+  --gold-light: #e8c97a;
+  --text-main:  #f0f4ff;
+  --text-muted: #8fa3c8;
+  --border:     rgba(100, 140, 200, 0.18);
+  --surface:    rgba(17, 32, 64, 0.95);
+  --card:       rgba(26, 48, 96, 0.5);
+  --radius:     10px;
+  --font:       'DM Sans', sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font);
+  background: var(--navy);
+  color: var(--text-main);
+  min-height: 100vh;
+}
+
+a { text-decoration: none; color: inherit; }
+
+.btn-primary {
+  background: var(--gold);
+  color: var(--navy);
+  border: none;
+  padding: 10px 22px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: opacity 0.2s;
+}
+.btn-primary:hover { opacity: 0.85; }
+
+.btn-outline {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  padding: 9px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: all 0.2s;
+}
+.btn-outline:hover { color: var(--text-main); border-color: var(--text-muted); }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+}
+
+.page-wrapper {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
