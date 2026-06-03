@@ -65,5 +65,9 @@ export const useUsersStore = defineStore('users', () => {
     return users.value.find(u => u.email === email)
   }
 
-  return { users, addUser, updateUser, removeUser, findByEmail }
+  function findById(id) {
+    return users.value.find(u => u.id === id)
+  }
+
+  return { users, addUser, updateUser, removeUser, findByEmail, findById }
 })

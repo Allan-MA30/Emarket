@@ -27,6 +27,8 @@
         <div class="prop-body">
           <div class="prop-name">{{ p.title }}</div>
           <div class="prop-loc">📍 {{ p.location }}</div>
+          <div class="seller-name">Listed by: {{ getSellerName(p.sellerId) }}</div>
+          <div v-if="auth.user?.id === p.sellerId" class="your-listing">Your listing</div>
           <div class="prop-meta">
             <span>🛏 {{ p.bedrooms }} beds</span>
             <span>🚿 {{ p.bathrooms }} baths</span>
@@ -43,11 +45,20 @@
 import { computed } from 'vue'
 import { useListingsStore } from '@/stores/listings'
 import { useAuthStore } from '@/stores/auth'
+import { useUsersStore } from '@/stores/users'
 
 const listings = useListingsStore()
 const auth = useAuthStore()
+const users = useUsersStore()
 
-const forSale = computed(() => listings.forSale)
+const forSale = computed(() =>
+  listings.properties.filter((p) => p.mode === 'sell')
+)
+
+function getSellerName(sellerId) {
+  const seller = users.findById(sellerId)
+  return seller ? seller.name : 'Seller'
+}
 
 function handleEnquire(property) {
   if (!auth.isLoggedIn) {
@@ -82,6 +93,8 @@ function handleEnquire(property) {
 .prop-body { padding: 1rem; }
 .prop-name { font-weight: 600; font-size: 15px; }
 .prop-loc { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+.seller-name { margin-top: 6px; font-size: 13px; color: #d8d8ff; }
+.your-listing { margin-top: 6px; display: inline-block; background: rgba(111,186,255,0.12); color: #6fbaff; border: 1px solid rgba(111,186,255,0.25); border-radius: 16px; padding: 4px 10px; font-size: 12px; font-weight: 600; }
 .prop-meta { display: flex; gap: 14px; font-size: 12px; color: var(--text-muted); margin-top: 10px; }
 .btn-enquire { width: 100%; margin-top: 12px; background: rgba(201,168,76,0.1); color: var(--gold); border: 1px solid rgba(201,168,76,0.3); padding: 8px; border-radius: 7px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: var(--font); transition: background .2s; }
 .btn-enquire:hover { background: rgba(201,168,76,0.2); }
