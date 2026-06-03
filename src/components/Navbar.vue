@@ -20,6 +20,7 @@
             {{ auth.isSeller ? 'Seller' : 'Viewer' }}
           </span>
           <div class="avatar">{{ initials }}</div>
+          <button class="btn-logout" @click="logout">Logout</button>
         </template>
         <template v-else>
           <RouterLink to="/login"    class="btn-outline" style="padding:7px 16px;font-size:13px;">Login</RouterLink>
@@ -39,11 +40,12 @@
 
 <script setup>
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
 const auth  = useRoute ? useAuthStore() : { isLoggedIn: false, isSeller: false }
 const route = useRoute()
+const router = useRouter()
 
 const isPropertyRoute = computed(() =>
   route.path.startsWith('/property')
@@ -53,6 +55,11 @@ const initials = computed(() => {
   const name = auth.user?.name || ''
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
 })
+
+function logout() {
+  auth.logout()
+  router.push('/')
+}
 </script>
 
 <style scoped>
@@ -85,6 +92,17 @@ const initials = computed(() => {
 .nav-link:hover, .nav-link.active { color: var(--text-main); background: var(--card); }
 .nav-link.active { color: var(--gold); }
 .nav-right { display: flex; align-items: center; gap: 10px; }
+.btn-logout {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all .2s;
+}
+.btn-logout:hover { color: var(--text-main); border-color: var(--text-main); }
 .avatar {
   width: 36px; height: 36px;
   border-radius: 50%;

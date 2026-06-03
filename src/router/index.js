@@ -10,6 +10,7 @@ import PropertyRent    from '@/views/PropertyRent.vue'
 import SellerDashboard from '@/views/SellerDashboard.vue'
 import AuthRegister    from '@/views/AuthRegister.vue'
 import AuthLogin       from '@/views/AuthLogin.vue'
+import AdminDashboard  from '@/views/AdminDashboard.vue'
 
 const routes = [
   { path: '/',               component: Home },
@@ -26,6 +27,11 @@ const routes = [
     component: SellerDashboard,
     meta: { requiresSeller: true }
   },
+  {
+    path: '/admin',
+    component: AdminDashboard,
+    meta: { requiresAdmin: true }
+  },
 ]
 
 const router = createRouter({
@@ -34,13 +40,15 @@ const router = createRouter({
 })
 
 
-// router.beforeEach((to) => {
-//   if (to.meta.requiresSeller) {
-//     const auth = useAuthStore()
-//     if (!auth.isLoggedIn || auth.user.role !== 'seller') {
-//       return '/login'
-//     }
-//   }
-// })
+router.beforeEach((to) => {
+  const auth = useAuthStore()
+  if (to.meta.requiresSeller) {
+    if (!auth.isLoggedIn || auth.user.role !== 'seller') return '/login'
+  }
+
+  if (to.meta.requiresAdmin) {
+    if (!auth.isLoggedIn || auth.user.role !== 'admin') return '/login'
+  }
+})
 
 export default router

@@ -91,7 +91,7 @@
             <div class="section-tag">Featured Properties</div>
             <h2 class="section-title">Handpicked For You</h2>
           </div>
-          <RouterLink to="/property/sell" class="btn-view-all">View All →</RouterLink>
+          <RouterLink to="/property/buy" class="btn-view-all">View All →</RouterLink>
         </div>
 
         <div class="prop-grid">
@@ -111,15 +111,18 @@
             <div class="prop-body">
               <div class="prop-name">{{ p.title }}</div>
               <div class="prop-loc">📍 {{ p.location }}</div>
-              <div class="prop-meta">
+              <div v-if="auth.isLoggedIn" class="prop-meta">
                 <span>🛏 {{ p.bedrooms }} beds</span>
                 <span>🚿 {{ p.bathrooms }} baths</span>
                 <span>{{ p.type }}</span>
               </div>
+              <div v-else class="prop-meta muted">Log in to view details</div>
               <RouterLink
-                :to="p.mode === 'rent' ? '/property/rent' : '/property/sell'"
+                @click="handlePropertyClick"
+                :to="p.mode === 'rent' ? '/property/rent' : '/property/buy'"
                 class="btn-view"
-              >View Property</RouterLink>
+                :style="!auth.isLoggedIn ? 'opacity: 0.5; cursor: not-allowed;' : ''"
+              >{{ auth.isLoggedIn ? 'View Property' : 'Log in to View' }}</RouterLink>
             </div>
           </div>
         </div>
@@ -207,12 +210,12 @@
       </div>
     </section>
 
-    <!-- CTA BANNER -->
-    <section class="cta-section">
+    <!-- CTA BANNER (hidden for sellers) -->
+    <section v-if="!auth.isSeller" class="cta-section">
       <div class="cta-inner">
         <h2 class="cta-title">Ready to List Your Property?</h2>
         <p class="cta-sub">Join hundreds of sellers already using NestLink to reach buyers across Rwanda.</p>
-        <RouterLink to="/register" class="btn-hero-primary">Get Started as a Seller</RouterLink>
+        <RouterLink :to="{ path: '/register', query: { role: 'seller' } }" class="btn-hero-primary">Get Started as a Seller</RouterLink>
       </div>
     </section>
 
@@ -222,9 +225,18 @@
 <script setup>
 import { computed } from 'vue'
 import { useListingsStore } from '@/stores/listings'
+import { useAuthStore } from '@/stores/auth'
 
 const listings = useListingsStore()
+const auth = useAuthStore()
 const featured = computed(() => listings.properties.slice(0, 3))
+
+function handlePropertyClick(e) {
+  if (!auth.isLoggedIn) {
+    e.preventDefault()
+    alert('Please log in to view property details.')
+  }
+}
 </script>
 
 <style scoped>
