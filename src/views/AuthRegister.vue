@@ -50,6 +50,39 @@
             <input id="adminkey" v-model="adminKey" type="password" placeholder="Enter admin key" />
           </div>
 
+          <div v-if="role === 'seller'" class="terms-row">
+            <div class="terms-title">Terms and conditions</div>
+            <div class="terms-items">
+              <label class="terms-check">
+                <input type="checkbox" v-model="termsAccepted" />
+                <span>
+                  1) On the bought product, <strong>5% will be gained</strong> by the website company.
+                </span>
+              </label>
+
+              <label class="terms-check">
+                <input type="checkbox" disabled checked />
+                <span>
+                  2) If you are found to lie that you have a property, <strong>you will be punished by law</strong>.
+                </span>
+              </label>
+
+              <label class="terms-check">
+                <input type="checkbox" disabled checked />
+                <span>
+                  3) You have to answer customers in <strong>not more than 1 day</strong>. Failure adds <strong>extra fines</strong>.
+                </span>
+              </label>
+            </div>
+
+            <div class="terms-confirm">
+              <label class="terms-check">
+                <input type="checkbox" v-model="termsAccepted" />
+                <span>I confirm that I agree to all the terms above.</span>
+              </label>
+            </div>
+          </div>
+
           <div v-if="error" class="error">{{ error }}</div>
 
           <div class="actions">
@@ -88,6 +121,10 @@ const loginTarget = computed(() => ({
     ...(route.query.next ? { next: route.query.next } : {}),
   },
 }))
+
+// Seller terms acceptance (required)
+const termsAccepted = ref(false)
+
 // preselect role from query (e.g. /register?role=seller)
 if (route.query.role === 'seller') role.value = 'seller'
 if (route.query.role === 'admin') role.value = 'admin'
@@ -99,10 +136,11 @@ watch(role, (newRole) => {
   if (newRole === 'viewer') {
     profilePreview.value = ''
     profilePicture.value = ''
+    termsAccepted.value = false
   }
 })
 
-function onSubmit() {
+function onSubmit() { 
   error.value = ''
   if (!name.value || !email.value || !password.value) {
     error.value = 'Please complete all fields.'
@@ -123,6 +161,11 @@ function onSubmit() {
     }
   }
 
+  if (role.value === 'seller' && !termsAccepted.value) {
+    error.value = 'You must accept the Terms and conditions to continue.'
+    return
+  }
+
   const userData = {
     id: Date.now(),
     name: name.value,
@@ -130,6 +173,7 @@ function onSubmit() {
     role: role.value,
     password: password.value,
     profilePicture: profilePicture.value,
+    ...(role.value === 'seller' ? { termsAccepted: true } : {}),
   }
 
   users.addUser(userData)
@@ -165,7 +209,13 @@ function clearProfilePicture() {
 .auth-card h2 { margin-bottom: 0.25rem; }
 .muted { color: var(--text-muted); margin-bottom: 1rem; }
 .form { display: grid; gap: 12px; margin-top: 8px; }
-.form-row label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px; }
+form-row label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px; }
+.terms-row { padding: 10px 12px; background: rgba(201,168,76,0.06); border: 1px solid var(--border); border-radius: 10px; }
+.terms-title { font-weight: 800; color: var(--gold); margin-bottom: 8px; }
+.terms-items { display: flex; flex-direction: column; gap: 8px; }
+.terms-check { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: var(--text-main); }
+.terms-check input { margin-top: 3px; }
+.terms-confirm { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
 .form-row input[type="text"], .form-row input[type="email"], .form-row input[type="password"] {
   width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border);
   background: transparent; color: var(--text-main);

@@ -48,7 +48,11 @@ router.beforeEach((to) => {
 
   if (to.meta.requiresSeller) {
     if (!auth.isLoggedIn || auth.user.role !== 'seller') return '/login'
+
+    // Sellers must accept Terms & conditions before accessing the dashboard
+    if (!auth.user.termsAccepted) return '/register?role=seller'
   }
+
 
   if (to.meta.requiresAdmin) {
     if (!auth.isLoggedIn || auth.user.role !== 'admin') return '/login'
