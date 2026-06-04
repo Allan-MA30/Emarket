@@ -57,20 +57,23 @@
         </div>
       </div>
 
-      <form class="contact-form" @submit.prevent="handleSubmit">
+      <form class="contact-form" @submit.prevent="handleSubmit" novalidate>
         <label>
           Name
-          <input type="text" v-model="name" placeholder="Your full name" required />
+          <input type="text" v-model="name" placeholder="Your full name" :class="{ invalid: nameError }" />
+          <p v-if="nameError" class="error-text">{{ nameError }}</p>
         </label>
 
         <label>
           Email
-          <input type="email" v-model="email" placeholder="you@example.com" required />
+          <input type="email" v-model="email" placeholder="you@example.com" :class="{ invalid: emailError }" />
+          <p v-if="emailError" class="error-text">{{ emailError }}</p>
         </label>
 
         <label>
           Message
-          <textarea v-model="message" rows="5" placeholder="Tell us how we can help" required></textarea>
+          <textarea v-model="message" rows="5" placeholder="Tell us how we can help" :class="{ invalid: messageError }"></textarea>
+          <p v-if="messageError" class="error-text">{{ messageError }}</p>
         </label>
 
         <button type="submit" class="btn-primary">Send message</button>
@@ -90,12 +93,52 @@ const name = ref('')
 const email = ref('')
 const message = ref('')
 const successMessage = ref('')
+const nameError = ref('')
+const emailError = ref('')
+const messageError = ref('')
+
+function validateEmail(value) {
+  const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return pattern.test(value)
+}
+
+function clearErrors() {
+  nameError.value = ''
+  emailError.value = ''
+  messageError.value = ''
+}
 
 function handleSubmit() {
+  clearErrors()
+
+  const trimmedName = name.value.trim()
+  const trimmedEmail = email.value.trim()
+  const trimmedMessage = message.value.trim()
+
+  if (!trimmedName) {
+    nameError.value = 'Please enter your full name.'
+  }
+
+  if (!trimmedEmail) {
+    emailError.value = 'Please enter a valid email address.'
+  } else if (!validateEmail(trimmedEmail)) {
+    emailError.value = 'Please provide a correct email format.'
+  }
+
+  if (!trimmedMessage) {
+    messageError.value = 'Please enter a message.'
+  } else if (trimmedMessage.length < 10) {
+    messageError.value = 'Message should be at least 10 characters long.'
+  }
+
+  if (nameError.value || emailError.value || messageError.value) {
+    return
+  }
+
   enquiriesStore.sendEnquiry({
-    fromName: name.value,
-    fromEmail: email.value,
-    message: message.value,
+    fromName: trimmedName,
+    fromEmail: trimmedEmail,
+    message: trimmedMessage,
     propertyId: null,
     propertyTitle: 'General enquiry',
     createdAt: new Date().toISOString().slice(0, 10),
@@ -191,6 +234,16 @@ function handleSubmit() {
 .btn-primary:hover {
   transform: translateY(-1px);
   background: rgba(29, 58, 129, 0.95);
+}
+
+.error-text {
+  color: #c0392b;
+  font-size: 0.9rem;
+  margin-top: 0.4rem;
+}
+
+.invalid {
+  border-color: #c0392b;
 }
 
 .success-text {
