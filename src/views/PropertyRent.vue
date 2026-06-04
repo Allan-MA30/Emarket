@@ -10,6 +10,12 @@
           <p>Browse apartments, houses, villas and offices across Rwanda.</p>
 
           <div class="search-box">
+            <select v-model="filters.category" class="rent-select">
+              <option value="">All Categories</option>
+              <option value="house">Houses</option>
+              <option value="land">Land</option>
+              <option value="car">Cars</option>
+            </select>
             <div class="search-container">
               <input 
                 type="text" 
@@ -30,7 +36,14 @@
                 </div>
               </div>
             </div>
-            <button>Search</button>
+            <select v-model="filters.price" class="rent-select">
+              <option value="">Any Price</option>
+              <option value="0-1000">Under $1k</option>
+              <option value="1000-50000">$1k - $50k</option>
+              <option value="50000-100000">$50k - $100k</option>
+              <option value="100000-999999999">$100k+</option>
+            </select>
+            <button @click="applyLocationSearch">Search</button>
           </div>
         </div>
       </div>
@@ -59,7 +72,7 @@
           :key="property.id"
         >
           <div class="property-image-wrapper">
-            <img :src="getPropertyImage(property.id)" :alt="property.name" class="property-img" />
+            <img :src="property.image || getPropertyImage(property.id)" :alt="property.name" class="property-img" />
             <div class="property-badge">{{ property.type }}</div>
           </div>
 
@@ -70,10 +83,13 @@
               {{ property.location }}
             </p>
 
-            <div class="details">
+            <div v-if="auth.isLoggedIn" class="details">
               <span class="detail-item">{{ property.bedrooms }} Bed</span>
               <span class="detail-item">{{ property.bathrooms }} Bath</span>
               <span class="detail-item">{{ property.size }}</span>
+            </div>
+            <div v-else class="details locked-details">
+              Log in to view rental details
             </div>
 
             <div class="bottom">
@@ -81,7 +97,9 @@
                 <span class="price-label">From</span>
                 <h4>${{ property.price }}<span>/month</span></h4>
               </div>
-              <button class="view-btn">View Details</button>
+              <RouterLink :to="rentalTarget" class="view-btn" @click="handleRentalClick">
+                {{ auth.isLoggedIn ? 'View Details' : 'Log in to View' }}
+              </RouterLink>
             </div>
           </div>
         </div>
@@ -125,7 +143,9 @@
       <div class="cta-content">
         <h2>Ready To Find Your Next Home?</h2>
         <p>Join thousands of satisfied renters who found their perfect property with us</p>
-        <button class="cta-btn">Browse Properties</button>
+        <RouterLink :to="rentalTarget" class="cta-btn">
+          {{ auth.isLoggedIn ? 'Browse Properties' : 'Log in to Browse' }}
+        </RouterLink>
       </div>
     </section>
 
@@ -133,16 +153,37 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
+import { useRoute } from 'vue-router'
+import { useListingsStore } from '@/stores/listings'
+import { useAuthStore } from '@/stores/auth'
 import image1 from '../assets/images/image1.png'
 import image2 from '../assets/images/image2.png'
 import image3 from '../assets/images/image3.png'
 
+const route = useRoute()
+const listings = useListingsStore()
+const auth = useAuthStore()
 const heroImage = image1
 
-const searchQuery = ref('')
+const searchQuery = ref(route.query.location || '')
 const showSuggestions = ref(false)
 const filteredLocations = ref([])
+const filters = reactive({
+  category: route.query.category || '',
+  location: route.query.location || '',
+  price: route.query.price || '',
+})
+const rentalTarget = computed(() => {
+  if (auth.isLoggedIn) return '/property/rent'
+  return {
+    path: '/login',
+    query: {
+      redirect: route.fullPath,
+      next: '/property/rent',
+    },
+  }
+})
 
 const rwandaLocations = [
   'Kigali',
@@ -180,10 +221,15 @@ const filterLocations = () => {
 
 const selectLocation = (location) => {
   searchQuery.value = location
+  filters.location = location
   showSuggestions.value = false
 }
 
-const properties = [
+function applyLocationSearch() {
+  filters.location = searchQuery.value
+}
+
+const demoProperties = [
   {
     id: 1,
     name: "Modern Apartment",
@@ -215,6 +261,28 @@ const properties = [
     type: "House"
   }
 ]
+
+const properties = computed(() => {
+  const storeRentals = listings.properties
+    .filter((p) => {
+      if (p.mode !== 'rent') return false
+      if (filters.category && p.category !== filters.category) return false
+      if (filters.location && !p.location.toLowerCase().includes(filters.location.toLowerCase())) return false
+      if (filters.price) {
+        const [min, max] = filters.price.split('-').map(Number)
+        if (p.price < min || p.price > max) return false
+      }
+      return true
+    })
+    .map((p) => ({
+      ...p,
+      name: p.title,
+      size: p.category === 'land' ? 'Plot' : p.category === 'car' ? 'Daily hire' : 'Home',
+    }))
+
+  const hasStoreRentals = listings.properties.some((p) => p.mode === 'rent')
+  return hasStoreRentals ? storeRentals : demoProperties
+})
 
 const stats = [
   { value: '500+', label: 'Properties', icon: '' },
@@ -255,6 +323,12 @@ const getPropertyImage = (id) => {
     3: image3
   }
   return images[id] || image1
+}
+
+function handleRentalClick() {
+  if (!auth.isLoggedIn) {
+    alert('Please log in or register to view full rental details.')
+  }
 }
 </script>
 
@@ -328,6 +402,17 @@ const getPropertyImage = (id) => {
 .search-container {
   position: relative;
   width: 350px;
+}
+
+.rent-select {
+  padding: 15px 16px;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  outline: none;
+  min-width: 180px;
+  background: white;
+  color: #374151;
 }
 
 .search-box input {

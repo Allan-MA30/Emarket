@@ -42,6 +42,10 @@ const router = createRouter({
 
 router.beforeEach((to) => {
   const auth = useAuthStore()
+  if (auth.isSeller && !['/dashboard', '/login', '/register'].includes(to.path)) {
+    return '/dashboard'
+  }
+
   if (to.meta.requiresSeller) {
     if (!auth.isLoggedIn || auth.user.role !== 'seller') return '/login'
   }

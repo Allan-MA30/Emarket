@@ -8,8 +8,8 @@
     <div v-if="!auth.isSeller" class="restricted-section">
       <div class="restricted-card">
         <div class="restricted-icon">🔒</div>
-        <h2>Seller Access Only</h2>
-        <p>This page is reserved for sellers to manage their property listings. Register as a seller to get started.</p>
+        <h2>This Page Is For Sellers And Property Lenders</h2>
+        <p>This page is for sellers and people who want to lend their property, land, houses, or cars. Register as a seller to start managing listings from your dashboard.</p>
         <RouterLink :to="{ path: '/register', query: { role: 'seller' } }" class="btn-register">Register as a Seller</RouterLink>
       </div>
     </div>

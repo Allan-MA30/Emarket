@@ -1,73 +1,44 @@
 /**
  * USERS STORE
- * Simple client-side user registry for demo/admin features
- * Persists to localStorage for data retention across sessions
+ * Owned by: Auth teammate
+ * Used by: Login, Register, PropertySell (to show seller name)
  */
 import { defineStore } from 'pinia'
-import { ref, watch } from 'vue'
-
-const STORAGE_KEY = 'estate_users'
-
-const defaultUsers = [
-  {
-    id: 1,
-    name: 'Administrator',
-    email: 'admin@local',
-    password: 'admin',
-    role: 'admin',
-  },
-  {
-    id: 2,
-    name: 'Demo Seller',
-    email: 'seller@local',
-    password: 'seller',
-    role: 'seller',
-  },
-  {
-    id: 3,
-    name: 'Demo Viewer',
-    email: 'viewer@local',
-    password: 'viewer',
-    role: 'viewer',
-  },
-]
-
-function loadUsersFromStorage() {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    return stored ? JSON.parse(stored) : defaultUsers
-  } catch {
-    return defaultUsers
-  }
-}
+import { ref } from 'vue'
 
 export const useUsersStore = defineStore('users', () => {
-  const users = ref(loadUsersFromStorage())
-
-  watch(users, (newUsers) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(newUsers))
-  }, { deep: true })
-
-  function addUser(user) {
-    users.value.push({ ...user, id: Date.now() })
-  }
-
-  function updateUser(id, updates) {
-    const i = users.value.findIndex(u => u.id === id)
-    if (i !== -1) users.value[i] = { ...users.value[i], ...updates }
-  }
-
-  function removeUser(id) {
-    users.value = users.value.filter(u => u.id !== id)
-  }
+  const users = ref([
+    // Demo seller account — for testing
+    {
+      id: 1,
+      name: 'Jean (Demo Seller)',
+      email: 'seller@nestlink.com',
+      password: 'seller123',
+      role: 'seller',
+      profilePicture: '',
+    },
+    // Demo admin account
+    {
+      id: 2,
+      name: 'Admin',
+      email: 'admin@nestlink.com',
+      password: 'admin123',
+      role: 'admin',
+      profilePicture: '',
+    },
+  ])
 
   function findByEmail(email) {
-    return users.value.find(u => u.email === email)
+    return users.value.find(u => u.email === email) || null
   }
 
   function findById(id) {
-    return users.value.find(u => u.id === id)
+    return users.value.find(u => u.id === id) || null
   }
 
-  return { users, addUser, updateUser, removeUser, findByEmail, findById }
+  function addUser(user) {
+    users.value.push(user)
+  }
+
+  return { users, findByEmail, findById, addUser }
 })

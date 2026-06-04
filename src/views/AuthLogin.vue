@@ -2,6 +2,7 @@
   <div class="page-wrapper">
     <div class="auth-wrap">
       <div class="card auth-card">
+        <button class="close-auth" type="button" @click="router.push('/')">x</button>
         <h2>Welcome back</h2>
         <p class="muted">Sign in to your account to continue</p>
 
@@ -29,7 +30,7 @@
 
           <div class="actions">
             <button class="btn-primary" type="submit">Sign in</button>
-            <RouterLink to="/register" class="btn-outline">Register</RouterLink>
+            <RouterLink :to="registerTarget" class="btn-outline">Register</RouterLink>
           </div>
         </form>
       </div>
@@ -38,19 +39,29 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useUsersStore } from '@/stores/users'
 
 const router = useRouter()
+const route = useRoute()
 const auth = useAuthStore()
 
 const email = ref('')
 const password = ref('')
-const role = ref('viewer')
+const role = ref(route.query.role === 'seller' ? 'seller' : route.query.role === 'admin' ? 'admin' : 'viewer')
 const error = ref('')
 const users = useUsersStore()
+const redirectTarget = computed(() => route.query.redirect || route.query.next || '/property/buy')
+const registerTarget = computed(() => ({
+  path: '/register',
+  query: {
+    ...(role.value === 'seller' ? { role: 'seller' } : {}),
+    ...(route.query.redirect ? { redirect: route.query.redirect } : {}),
+    ...(route.query.next ? { next: route.query.next } : {}),
+  },
+}))
 
 function onSubmit() {
   error.value = ''
@@ -101,13 +112,15 @@ function onSubmit() {
     role: 'viewer',
   }
   auth.login(userData)
-  router.push('/property/buy')
+  router.push(redirectTarget.value)
 }
 </script>
 
 <style scoped>
 .auth-wrap { display: flex; justify-content: center; padding: 3rem 0; }
-.auth-card { width: 420px; }
+.auth-card { width: 420px; position: relative; }
+.close-auth { position: absolute; top: 12px; right: 12px; width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--border); background: transparent; color: var(--text-muted); cursor: pointer; font-size: 16px; line-height: 1; }
+.close-auth:hover { color: var(--text-main); border-color: var(--gold); }
 .auth-card h2 { margin-bottom: 0.25rem; }
 .muted { color: var(--text-muted); margin-bottom: 1rem; }
 .form { display: grid; gap: 12px; margin-top: 8px; }

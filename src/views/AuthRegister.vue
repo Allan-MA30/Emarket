@@ -2,6 +2,7 @@
   <div class="page-wrapper">
     <div class="auth-wrap">
       <div class="card auth-card">
+        <button class="close-auth" type="button" @click="router.push('/')">x</button>
         <h2>Create an account</h2>
         <p class="muted">Register to list or browse properties</p>
 
@@ -53,7 +54,7 @@
 
           <div class="actions">
             <button class="btn-primary" type="submit">Create account</button>
-            <RouterLink to="/login" class="btn-outline">Sign in</RouterLink>
+            <RouterLink :to="loginTarget" class="btn-outline">Sign in</RouterLink>
           </div>
         </form>
       </div>
@@ -62,7 +63,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useUsersStore } from '@/stores/users'
@@ -78,6 +79,15 @@ const role = ref('viewer')
 const users = useUsersStore()
 const adminKey = ref('')
 const error = ref('')
+const redirectTarget = computed(() => route.query.redirect || route.query.next || '/property/buy')
+const loginTarget = computed(() => ({
+  path: '/login',
+  query: {
+    ...(role.value === 'seller' ? { role: 'seller' } : {}),
+    ...(route.query.redirect ? { redirect: route.query.redirect } : {}),
+    ...(route.query.next ? { next: route.query.next } : {}),
+  },
+}))
 // preselect role from query (e.g. /register?role=seller)
 if (route.query.role === 'seller') role.value = 'seller'
 if (route.query.role === 'admin') role.value = 'admin'
@@ -127,7 +137,7 @@ function onSubmit() {
 
   // Redirect based on role
   if (role.value === 'seller') router.push('/dashboard')
-  else router.push('/property/buy')
+  else router.push(redirectTarget.value)
 }
 
 function handleFile(e) {
@@ -149,7 +159,9 @@ function clearProfilePicture() {
 
 <style scoped>
 .auth-wrap { display: flex; justify-content: center; padding: 3rem 0; }
-.auth-card { width: 460px; }
+.auth-card { width: 460px; position: relative; }
+.close-auth { position: absolute; top: 12px; right: 12px; width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--border); background: transparent; color: var(--text-muted); cursor: pointer; font-size: 16px; line-height: 1; }
+.close-auth:hover { color: var(--text-main); border-color: var(--gold); }
 .auth-card h2 { margin-bottom: 0.25rem; }
 .muted { color: var(--text-muted); margin-bottom: 1rem; }
 .form { display: grid; gap: 12px; margin-top: 8px; }

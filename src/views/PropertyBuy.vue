@@ -5,6 +5,26 @@
       <p class="page-sub">{{ forSale.length }} properties available</p>
     </div>
 
+    <div class="filters-bar">
+      <select v-model="filters.category" class="filter-select">
+        <option value="">All Categories</option>
+        <option value="house">Houses</option>
+        <option value="land">Land</option>
+        <option value="car">Cars</option>
+      </select>
+      <select v-model="filters.location" class="filter-select">
+        <option value="">All Locations</option>
+        <option v-for="location in locations" :key="location" :value="location">{{ location }}</option>
+      </select>
+      <select v-model="filters.price" class="filter-select">
+        <option value="">Any Price</option>
+        <option value="0-1000">Under $1k</option>
+        <option value="1000-50000">$1k - $50k</option>
+        <option value="50000-100000">$50k - $100k</option>
+        <option value="100000-999999999">$100k+</option>
+      </select>
+    </div>
+
     <div v-if="forSale.length === 0" class="empty-section">
       <div class="empty-card">
         <div class="empty-icon">🏘️</div>
@@ -34,7 +54,7 @@
             <span>🚿 {{ p.bathrooms }} baths</span>
             <span>{{ p.type }}</span>
           </div>
-          <button class="btn-enquire" @click="handleEnquire(p)">Enquire Now</button>
+          <button class="btn-enquire" @click.stop="handleEnquire(p)">Enquire Now</button>
         </div>
       </div>
     </div>
@@ -42,17 +62,38 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, reactive } from 'vue'
+import { useRoute } from 'vue-router'
 import { useListingsStore } from '@/stores/listings'
 import { useAuthStore } from '@/stores/auth'
 import { useUsersStore } from '@/stores/users'
+import { useEnquiriesStore } from '@/stores/enquiries'
 
+const route = useRoute()
 const listings = useListingsStore()
 const auth = useAuthStore()
 const users = useUsersStore()
+const enquiries = useEnquiriesStore()
+
+const filters = reactive({
+  category: route.query.category || '',
+  location: route.query.location || '',
+  price: route.query.price || '',
+})
+
+const locations = computed(() => [...new Set(listings.properties.filter(p => p.mode === 'sell').map(p => p.location))])
 
 const forSale = computed(() =>
-  listings.properties.filter((p) => p.mode === 'sell')
+  listings.properties.filter((p) => {
+    if (p.mode !== 'sell') return false
+    if (filters.category && p.category !== filters.category) return false
+    if (filters.location && p.location !== filters.location) return false
+    if (filters.price) {
+      const [min, max] = filters.price.split('-').map(Number)
+      if (p.price < min || p.price > max) return false
+    }
+    return true
+  })
 )
 
 function getSellerName(sellerId) {
@@ -65,8 +106,18 @@ function handleEnquire(property) {
     alert('Please log in to send an enquiry')
     return
   }
+  const message = prompt(`Message to seller about ${property.title}:`, 'I am interested in this listing. Is it still available?')
+  if (!message) return
+  enquiries.sendEnquiry({
+    fromName: auth.user?.name || 'Buyer',
+    fromEmail: auth.user?.email || 'buyer@email.com',
+    propertyId: property.id,
+    sellerId: property.sellerId,
+    propertyTitle: property.title,
+    message,
+    createdAt: new Date().toISOString().split('T')[0],
+  })
   alert(`Enquiry sent for ${property.title}`)
-  // TODO: Wire to enquiries store
 }
 </script>
 
@@ -75,6 +126,9 @@ function handleEnquire(property) {
 .page-top { margin-bottom: 1.75rem; }
 .page-title { font-size: 26px; font-weight: 700; }
 .page-sub { color: var(--text-muted); font-size: 14px; margin-top: 4px; }
+.filters-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 1.5rem; }
+.filter-select { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text-main); padding: 10px 12px; font-family: var(--font); }
+.filter-select option { background: var(--navy-2); }
 .empty-section { display: flex; justify-content: center; padding: 4rem 1rem; }
 .empty-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 3rem 2rem; max-width: 500px; text-align: center; }
 .empty-icon { font-size: 56px; margin-bottom: 1rem; }
